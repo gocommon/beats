@@ -18,7 +18,7 @@ type Worktile struct {
 	beat     beat.Info
 	observer outputs.Observer
 	codec    codec.Codec
-	buff     bytes.Buffer
+	buff     *bytes.Buffer
 	ch       chan []byte
 }
 
@@ -30,7 +30,10 @@ func (p *Worktile) proc() {
 			default:
 				if p.buff.Len() == 0 {
 					select {
-					case <- p.ch:
+					case msg := <- p.ch:
+						p.buff.Write(msg)
+						p.buff.WriteString("\n")
+						continue
 					}
 				}
 
@@ -74,6 +77,7 @@ func NewFactory(im outputs.IndexManager, beat beat.Info, stats outputs.Observer,
 		cfg:      config,
 		codec:    codec,
 		ch : make(chan []byte,100),
+		buff: new(bytes.Buffer),
 	}
 
 	return outputs.Success(-1, 0, c)
